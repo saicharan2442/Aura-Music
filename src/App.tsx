@@ -16,6 +16,7 @@ import { QueuePanel } from './components/QueuePanel';
 import { NowPlaying } from './components/NowPlaying';
 import { MiniMode } from './components/MiniPlayer';
 import { AudioEngine } from './components/AudioEngine';
+import { YouTubePlayer } from './components/YouTubePlayer';
 import { ContextMenu } from './components/ContextMenu';
 import { Modals } from './components/Modals';
 import { Toasts } from './components/Toasts';
@@ -215,6 +216,7 @@ export default function App() {
   return (
     <div className="h-full flex flex-col app-bg grain text-main overflow-hidden">
       <AudioEngine />
+      <YouTubePlayer />
 
       {miniMode ? (
         <MiniMode />

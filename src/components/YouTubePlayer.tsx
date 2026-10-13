@@ -121,6 +121,7 @@ export function YouTubePlayer() {
       playerRef.current = new (window as any).YT.Player(containerRef.current, {
         height: '100%',
         width: '100%',
+        host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 0,
           controls: 0,
@@ -162,18 +163,39 @@ export function YouTubePlayer() {
               return;
             }
 
-            const cur = usePlayer.getState().current();
-            if (cur?.streamUrl && cur.provider === 'itunes') {
-              const el = document.querySelector('audio') as HTMLAudioElement;
-              if (el) {
-                el.src = cur.streamUrl;
-                el.currentTime = 0;
-                el.play().catch(() => {});
-                return;
+            const failFallback = () => {
+              const cur = usePlayer.getState().current();
+              if (cur?.streamUrl && cur.provider === 'itunes') {
+                const el = document.querySelector('audio') as HTMLAudioElement;
+                if (el) {
+                  el.src = cur.streamUrl;
+                  el.currentTime = 0;
+                  el.play().catch(() => {});
+                  return;
+                }
               }
+              useUI.getState().toast({ title: 'Playback failed', sub: 'YouTube blocked this stream.', kind: 'error' });
+              usePlayer.getState().advance(true);
+            };
+
+            const cur = usePlayer.getState().current();
+            if (cur && (cur.provider === 'youtube' || cur.provider === 'itunes') && candidatesRef.current.length <= 1) {
+              const query = `${cur.title} ${cur.artist}`;
+              resolveYoutubeBridgeCandidates(query).then((cands) => {
+                const fresh = cands.filter((c) => !candidatesRef.current.includes(c));
+                if (fresh.length) {
+                  candidatesRef.current = [...candidatesRef.current, ...fresh];
+                  candidateIdxRef.current += 1;
+                  console.log('Trying fallback candidate:', candidatesRef.current[candidateIdxRef.current]);
+                  loadVid(candidatesRef.current[candidateIdxRef.current]);
+                  return;
+                }
+                failFallback();
+              }).catch(failFallback);
+              return;
             }
-            useUI.getState().toast({ title: 'Playback failed', sub: 'YouTube blocked this stream.', kind: 'error' });
-            usePlayer.getState().advance(true);
+
+            failFallback();
           }
         },
       });
@@ -256,6 +278,30 @@ export function YouTubePlayer() {
   const videoMode = useUI((s) => s.videoMode);
   const npOpen = useUI((s) => s.npOpen);
   const showVideo = videoMode && npOpen && isYoutube;
+  const [slotRect, setSlotRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (!showVideo) {
+      setSlotRect(null);
+      return;
+    }
+    const updateRect = () => {
+      const el = document.getElementById('aura-yt-slot');
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) {
+          setSlotRect(r);
+        }
+      }
+    };
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    const interval = setInterval(updateRect, 250);
+    return () => {
+      window.removeEventListener('resize', updateRect);
+      clearInterval(interval);
+    };
+  }, [showVideo]);
 
   useEffect(() => {
     if (!showVideo) return;
@@ -292,16 +338,73 @@ export function YouTubePlayer() {
     return () => cancelAnimationFrame(raf);
   }, [isYoutube, isPlaying]);
 
+  let wrapperStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: 0,
+    right: 0,
+    width: 200,
+    height: 200,
+    opacity: 0.001,
+    pointerEvents: 'none',
+    zIndex: -50,
+  };
+
+  if (showVideo) {
+    if (isFullscreen) {
+      wrapperStyle = {
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 100,
+        backgroundColor: '#000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 0,
+        margin: 0,
+        pointerEvents: 'auto',
+      };
+    } else if (slotRect) {
+      wrapperStyle = {
+        position: 'fixed',
+        left: slotRect.left,
+        top: slotRect.top,
+        width: slotRect.width,
+        height: slotRect.height,
+        zIndex: 85,
+        backgroundColor: '#000',
+        borderRadius: 24,
+        overflow: 'hidden',
+        pointerEvents: 'auto',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+      };
+    } else {
+      wrapperStyle = {
+        position: 'fixed',
+        left: '50%',
+        top: '42%',
+        transform: 'translate(-50%, -50%)',
+        width: 'min(90vw, calc((100vh - 280px) * 16 / 9))',
+        maxHeight: 'calc(100vh - 280px)',
+        aspectRatio: '16/9',
+        zIndex: 85,
+        backgroundColor: '#000',
+        borderRadius: 24,
+        overflow: 'hidden',
+        pointerEvents: 'auto',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+      };
+    }
+  }
+
   return (
     <div 
       ref={wrapperRef}
+      style={wrapperStyle}
       className={cx(
-        "overflow-hidden select-none transition-all duration-300",
-        showVideo
-          ? isFullscreen
-            ? "fixed inset-0 z-[100] w-screen h-screen max-w-none max-h-none rounded-none aspect-video bg-black flex items-center justify-center p-0 m-0"
-            : "relative z-10 w-full max-w-[min(100%,calc((100vh-280px)*16/9))] max-h-[calc(100vh-280px)] aspect-video rounded-2xl md:rounded-3xl ring-1 ring-white/15 bg-black shadow-2xl shrink-0 mx-auto my-auto"
-          : "fixed -top-[9999px] -left-[9999px] w-[320px] h-[180px] opacity-0 pointer-events-none z-[-1]"
+        "overflow-hidden select-none transition-all duration-200",
+        !showVideo && "pointer-events-none"
       )}
       aria-hidden={!showVideo}
       onMouseMove={showVideo ? handleUserActivity : undefined}
@@ -355,3 +458,4 @@ export function YouTubePlayer() {
     </div>
   );
 }
+

@@ -10,7 +10,6 @@ import { usePalette } from '../hooks';
 import { clamp, cx, fmtTime } from '../utils';
 import { Artwork } from './Artwork';
 import { ProgressBar } from './PlayerBar';
-import { YouTubePlayer } from './YouTubePlayer';
 import { LyricsView } from './LyricsView';
 import { getHeuristicBpm, detectAcousticBpm, type BeatAnalysis } from '../services/beatDetector';
 
@@ -390,11 +389,7 @@ function NowPlayingInner() {
   }, [setOpen]);
 
   if (!current) {
-    return (
-      <div className="hidden">
-        <YouTubePlayer />
-      </div>
-    );
+    return null;
   }
 
   const dur = duration || current.duration || 0;
@@ -641,7 +636,12 @@ function NowPlayingInner() {
             isSplit ? "lg:col-span-5 gap-2.5 max-w-[460px]" : "lg:col-span-12 gap-3.5 max-w-[640px]"
           )}>
             {!showVideo && artworkBlock}
-            <YouTubePlayer />
+            {showVideo && (
+              <div
+                id="aura-yt-slot"
+                className="w-full max-w-[min(100%,calc((100vh-280px)*16/9))] max-h-[calc(100vh-280px)] aspect-video rounded-2xl md:rounded-3xl shrink-0 mx-auto my-auto"
+              />
+            )}
             {titlesBlock}
             {seekBlock}
             {controlsBlock}
