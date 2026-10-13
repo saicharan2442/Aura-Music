@@ -21,7 +21,7 @@ import { useSettings } from '../store/settings';
 import { archiveProvider } from './archive';
 import { youtubeProvider } from './youtube';
 
-const ALWAYS = [itunesProvider, audiusProvider, archiveProvider];
+const ALWAYS = [itunesProvider, youtubeProvider, audiusProvider, archiveProvider];
 
 /** providers usable right now (config-dependent ones included when set up) */
 export function getProviders(): MusicProvider[] {
@@ -29,19 +29,18 @@ export function getProviders(): MusicProvider[] {
   const list: MusicProvider[] = [...ALWAYS];
   if (customSourceUrl()) list.unshift(customProvider);
   if (s.jamendoKey.trim()) list.push(jamendoProvider);
-  if (s.youtubeKey.trim()) list.push(youtubeProvider);
   return list;
 }
 
 const unhealthyUntil = new Map<string, number>();
-const HEALTH_COOLDOWN = 3 * 60_000;
+const HEALTH_COOLDOWN = 10_000;
 
 function order(): MusicProvider[] {
   const pref = useSettings.getState().provider;
   const all = getProviders();
   if (pref !== 'all') {
     const chosen = all.find((p) => p.id === pref);
-    return chosen ? [chosen] : all;
+    return chosen ? [chosen, ...all.filter(p => p.id !== pref)] : all;
   }
   const healthy: MusicProvider[] = [];
   const cooling: MusicProvider[] = [];
@@ -79,7 +78,6 @@ async function aggregate<T>(
   
   const ps = order();
   const results = await Promise.allSettled(ps.map(p => {
-    // If it's a known cooling provider and we have others, we could skip, but let's just try anyway
     return fn(p).catch(e => {
       if (e?.message !== 'cancelled') unhealthyUntil.set(p.id, Date.now() + HEALTH_COOLDOWN);
       throw e;
@@ -92,7 +90,10 @@ async function aggregate<T>(
     
   if (successful.length === 0) {
     const firstErr = results.find(r => r.status === 'rejected');
-    throw firstErr ? (firstErr as any).reason : new ProviderError('No providers available');
+    if (firstErr && (firstErr as any).reason?.message === 'cancelled') {
+      throw (firstErr as any).reason;
+    }
+    return merge([]);
   }
   
   return merge(successful);

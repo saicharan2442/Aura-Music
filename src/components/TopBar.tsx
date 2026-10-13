@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Minus, Moon, Search, Square, Sun, Wifi, WifiOff, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Moon, Search, Sun, Wifi, WifiOff, X } from 'lucide-react';
 import { useSettings } from '../store/settings';
 import { useUI } from '../store/ui';
 import { getTheme } from '../themes/themes';
 import { cx } from '../utils';
+import { Logo } from './Logo';
 
-/* Frame-style top bar: navigation, omnibox search, window controls. */
+/* Frame-style top bar: navigation, omnibox search, status actions. */
 
 export function TopBar() {
   const page = useUI((s) => s.page);
@@ -19,9 +20,9 @@ export function TopBar() {
   const setQuery = useUI((s) => s.setSearchQuery);
   const searchFocus = useUI((s) => s.searchFocus);
   const online = useUI((s) => s.online);
-  const setMiniMode = useUI((s) => s.setMiniMode);
   const toast = useUI((s) => s.toast);
   const themeId = useSettings((s) => s.themeId);
+  const userName = useSettings((s) => s.userName);
   const set = useSettings((s) => s.set);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +45,16 @@ export function TopBar() {
 
   return (
     <header className="relative z-40 h-[60px] shrink-0 flex items-center gap-3 px-4 border-b border-line glass" role="banner">
+      {/* app brand icon */}
+      <button
+        onClick={() => go({ id: 'home' })}
+        className="flex items-center gap-2 rounded-xl p-1 hover:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] transition-all mr-0.5 group shrink-0"
+        title="Aura Music Home"
+        aria-label="Aura Music Home"
+      >
+        <Logo size={28} glow />
+      </button>
+
       {/* nav controls */}
       <div className="flex items-center gap-1">
         <button className="icon-btn" onClick={back} disabled={!past.length} aria-label="Back">
@@ -101,7 +112,7 @@ export function TopBar() {
       </div>
 
       {/* status + quick actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           className={cx('icon-btn', !online && 'text-[#ff8580]')}
           title={online ? 'Connected' : "You're offline"}
@@ -114,22 +125,21 @@ export function TopBar() {
           {isLight ? <Moon size={16} /> : <Sun size={16} />}
         </button>
 
-        <span className="w-px h-5 bg-[var(--border)] mx-2" aria-hidden />
-
-        {/* window controls — mirror the Windows desktop shell */}
-        <div className="flex items-center gap-0.5" role="group" aria-label="Window controls">
-          <button className="icon-btn !w-9 !h-8 !rounded-lg" title="Minimize to mini player" aria-label="Minimize to mini player" onClick={() => setMiniMode(true)}>
-            <Minus size={15} />
+        {userName ? (
+          <button
+            onClick={() => go({ id: 'settings' })}
+            className="flex items-center gap-2 ml-1 pl-1.5 pr-3 py-1 rounded-full bg-[color-mix(in_srgb,var(--text)_6%,transparent)] hover:bg-[color-mix(in_srgb,var(--text)_12%,transparent)] border border-line transition-all group shrink-0"
+            title={`Hi ${userName} · Open Settings`}
+            aria-label={`User profile: ${userName}`}
+          >
+            <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white bg-gradient-to-tr from-[var(--accent)] to-[var(--accent2)] shadow-sm">
+              {userName.charAt(0).toUpperCase()}
+            </span>
+            <span className="text-[12px] font-medium text-soft group-hover:text-main truncate max-w-[100px]">
+              {userName}
+            </span>
           </button>
-          <button className="icon-btn !w-9 !h-8 !rounded-lg" title="Maximize (desktop build)" aria-label="Maximize"
-            onClick={() => toast({ title: 'Window controls', sub: 'Maximize is available in the Windows desktop build' })}>
-            <Square size={12} />
-          </button>
-          <button className="icon-btn !w-9 !h-8 !rounded-lg hover:!bg-[#e8112322] hover:!text-[#ff6b66]" title="Close (desktop build)" aria-label="Close"
-            onClick={() => toast({ title: 'Aura keeps playing', sub: 'The desktop build sits in your system tray instead' })}>
-            <X size={16} />
-          </button>
-        </div>
+        ) : null}
       </div>
     </header>
   );

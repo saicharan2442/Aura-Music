@@ -190,7 +190,13 @@ export const usePlayer = create<PlayerState>()(
         return false;
       },
 
-      seek: (t) => set({ position: Math.max(0, t) }),
+      seek: (t) => {
+        const target = Math.max(0, t);
+        set({ position: target });
+        if (typeof (window as any).__aura_yt_seek === 'function') {
+          (window as any).__aura_yt_seek(target);
+        }
+      },
       setPosition: (t) => set({ position: t }),
       setDuration: (d) => set({ duration: isFinite(d) ? d : 0 }),
 

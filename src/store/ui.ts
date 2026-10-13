@@ -29,6 +29,8 @@ interface UIState {
   setMiniMode: (b: boolean) => void;
   videoMode: boolean;
   setVideoMode: (b: boolean) => void;
+  lyricsMode: boolean;
+  setLyricsMode: (b: boolean) => void;
 
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -81,6 +83,8 @@ export const useUI = create<UIState>()((set, get) => ({
   setMiniMode: (b) => set({ miniMode: b }),
   videoMode: false,
   setVideoMode: (b) => set({ videoMode: b }),
+  lyricsMode: false,
+  setLyricsMode: (b) => set({ lyricsMode: b }),
 
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),

@@ -7,16 +7,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Node
-node_modules
-dist
-dist-ssr
+# Node dependencies & builds
+node_modules/
+dist/
+dist-ssr/
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -24,7 +24,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Env files
+# Environment configurations
 .env
 .env.local
 .env.development.local
@@ -45,13 +45,17 @@ tsconfig.tsbuildinfo
 .next/
 .nuxt/
 
-# Desktop / Executables
+# Desktop / Executables & Binaries
 *.exe
+*.msi
 *.dll
 *.so
 *.dylib
 *.dmg
 src-tauri/target/
 
-# Agent/IDE specific
+# Agent/IDE & Scratch
 .gemini/
+.system_generated/
+.tempmediaStorage/
+scratch/

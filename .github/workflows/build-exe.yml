@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - master
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -20,6 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -27,16 +31,37 @@ jobs:
           targets: x86_64-pc-windows-msvc
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      - name: Build Tauri App
+      - name: Build Tauri App & Create Release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
           releaseName: "Aura Music v__VERSION__"
-          releaseBody: "Automated build of the Aura Music executable."
+          releaseBody: |
+            ### Aura Music v__VERSION__
+            
+            **What's New in v1.1.0:**
+            - 🎵 **Real-time Subwoofer Bass Visualizer**: Dynamic 360-degree radial audio wave creator that reacts synchronously to musical beats.
+            - 🎤 **Live Time-Synced Lyrics**: Streaming lyrics with smooth dead-center auto-scrolling till the end of the song.
+            - 📝 **Add / Edit Custom Lyrics**: Paste LRC or plain lyrics with instant local persistence and auto-scroll.
+            - 🎬 **Seamless Video Mode**: Full HD video and album artwork toggling without resetting or interrupting audio playback.
+            - 🔍 **Enhanced Search Engine**: Universal multi-provider catalog with automated failover and regional track support.
+            
+            Download the installer or standalone `.exe` below to start listening!
           releaseDraft: false
           prerelease: false
           args: --target x86_64-pc-windows-msvc
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Aura-Music-Windows-v1.1.0
+          path: |
+            src-tauri/target/**/release/bundle/nsis/*.exe
+            src-tauri/target/**/release/bundle/msi/*.msi
+            src-tauri/target/**/release/*.exe
+          if-no-files-found: ignore

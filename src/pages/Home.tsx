@@ -54,6 +54,7 @@ export default function Home() {
   const { data, error, loading, reload } = useAsync((signal) => activeProvider.homeFeed().then((d) => { void signal; return d; }), []);
   const recent = useLibrary((s) => s.recent);
   const dynamicColors = useSettings((s) => s.dynamicColors);
+  const userName = useSettings((s) => s.userName);
 
   const featured = data?.charts?.[0] ?? null;
   const palette = usePalette(dynamicColors ? featured?.artwork : undefined, featured?.title ?? 'aura-home');
@@ -84,6 +85,14 @@ export default function Home() {
               <CalendarDays size={12.5} /> {today}
             </p>
             <h1 className="display text-main font-bold text-[34px] md:text-[42px] leading-[1.06] tracking-tight mt-3">
+              {userName?.trim() ? (
+                <>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--accent2)]">
+                    {userName.trim()}
+                  </span>
+                  <span className="text-soft font-normal">, </span>
+                </>
+              ) : null}
               {greeting()}<span style={{ color: 'var(--accent)' }}>.</span>
             </h1>
             <p className="text-soft text-[13.5px] mt-3 max-w-[420px] leading-relaxed">

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { usePlayer, type QueueItem } from '../store/player';
 import { useSettings } from '../store/settings';
 import { useUI } from '../store/ui';
-import { YouTubePlayer } from './YouTubePlayer';
 
 /* ------------------------------------------------------------------ */
 /*  AudioEngine — dual <audio> pipeline with smooth ramps, crossfade, */
@@ -106,7 +105,7 @@ export function AudioEngine() {
     }
     if (lastLoaded.current === currentQid) return; // crossfade already prepared it
     lastLoaded.current = currentQid;
-    if (current?.provider === 'youtube') {
+    if (current?.provider === 'youtube' || current?.provider === 'itunes') {
       rampTo(el, 0, 250, () => {
         el.pause();
         el.removeAttribute('src');
@@ -143,7 +142,7 @@ export function AudioEngine() {
   /* -------- transport play / pause -------- */
   useEffect(() => {
     const el = activeEl();
-    if (!el || !lastLoaded.current || current?.provider === 'youtube') return;
+    if (!el || !lastLoaded.current || current?.provider === 'youtube' || current?.provider === 'itunes') return;
     if (isPlaying) {
       el.play().then(() => rampTo(el, baseVol(), 200)).catch(() => {});
     } else {
@@ -155,7 +154,7 @@ export function AudioEngine() {
   /* -------- volume / mute / speed -------- */
   useEffect(() => {
     const el = activeEl();
-    if (!el || fading.current || current?.provider === 'youtube') return;
+    if (!el || fading.current || current?.provider === 'youtube' || current?.provider === 'itunes') return;
     rampTo(el, baseVol(), 120);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [volume, muted, normalization]);
@@ -168,7 +167,7 @@ export function AudioEngine() {
   /* -------- external seeks -------- */
   useEffect(() => {
     const el = activeEl();
-    if (!el || current?.provider === 'youtube') return;
+    if (!el || current?.provider === 'youtube' || current?.provider === 'itunes') return;
     if (Math.abs(el.currentTime - position) > 0.7) el.currentTime = position;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position]);
@@ -179,7 +178,7 @@ export function AudioEngine() {
     const loop = () => {
       raf = requestAnimationFrame(loop);
       const el = activeEl();
-      if (!el || !lastLoaded.current || current?.provider === 'youtube') return;
+      if (!el || !lastLoaded.current || current?.provider === 'youtube' || current?.provider === 'itunes') return;
       const p = usePlayer.getState();
       if (!p.isPlaying) return;
       const ct = el.currentTime;
@@ -193,7 +192,7 @@ export function AudioEngine() {
         !fading.current && p.repeat !== 'one'
       ) {
         const next = p.peekNext();
-        if (next?.streamUrl && next.provider !== 'youtube') startCrossfade(next);
+        if (next?.streamUrl && next.provider !== 'youtube' && next.provider !== 'itunes') startCrossfade(next);
       }
     };
     raf = requestAnimationFrame(loop);
@@ -285,7 +284,6 @@ export function AudioEngine() {
     <>
       <audio className="hidden" ref={elA} preload="auto" onEnded={onEnded(0)} onError={onError(0)} />
       <audio className="hidden" ref={elB} preload="auto" onEnded={onEnded(1)} onError={onError(1)} />
-      <YouTubePlayer />
     </>
   );
 }

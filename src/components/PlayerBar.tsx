@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
-  Heart, ListMusic, Maximize2, Minimize2, Pause, Play, Repeat, Repeat1,
-  Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX,
+  Heart, ListMusic, Maximize2, Mic2, Minimize2, Pause, Play, Repeat, Repeat1,
+  Shuffle, SkipBack, SkipForward, Video, Volume1, Volume2, VolumeX,
 } from 'lucide-react';
 import { useLibrary } from '../store/library';
 import { usePlayer } from '../store/player';
@@ -105,6 +105,9 @@ export function PlayerBar() {
   const setQueueOpen = useUI((s) => s.setQueueOpen);
   const setNpOpen = useUI((s) => s.setNpOpen);
   const setMiniMode = useUI((s) => s.setMiniMode);
+  const videoMode = useUI((s) => s.videoMode);
+  const lyricsMode = useUI((s) => s.lyricsMode);
+  const npOpen = useUI((s) => s.npOpen);
   const go = useUI((s) => s.go);
   const menu = useTrackMenu();
 
@@ -246,6 +249,34 @@ export function PlayerBar() {
           <VolumeControl />
           <button className={btn} aria-label="Mini player" title="Mini player" onClick={() => setMiniMode(true)}>
             <Minimize2 size={15.5} />
+          </button>
+          {(current?.provider === 'youtube' || current?.provider === 'itunes') && (
+            <button
+              className={cx(btn, videoMode && 'active text-acc')}
+              aria-label="Toggle Video Mode"
+              title={videoMode ? "Hide Video" : "Watch Video"}
+              onClick={() => {
+                const vm = !videoMode;
+                useUI.getState().setVideoMode(vm);
+                if (vm && !useUI.getState().npOpen) {
+                  useUI.getState().setNpOpen(true);
+                }
+              }}
+            >
+              <Video size={16} />
+            </button>
+          )}
+          <button
+            className={cx(btn, lyricsMode && npOpen && 'active text-acc')}
+            aria-label="Lyrics"
+            title="Lyrics (Live Synced)"
+            onClick={() => {
+              useUI.getState().setLyricsMode(true);
+              useUI.getState().setNpOpen(true);
+            }}
+            disabled={!current}
+          >
+            <Mic2 size={16} />
           </button>
           <button className={btn} aria-label="Now Playing" title="Now Playing" onClick={() => setNpOpen(true)} disabled={!current}>
             <Maximize2 size={15.5} />

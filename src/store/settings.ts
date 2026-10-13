@@ -35,6 +35,8 @@ interface SettingsState {
   speed: number;
   /* interface */
   sidebarCollapsed: boolean;
+  /* user profile */
+  userName: string;
   /* lifecycle */
   hasOnboarded: boolean;
   set: (patch: Partial<SettingsState>) => void;
@@ -63,6 +65,7 @@ export const useSettings = create<SettingsState>()(
       notifications: 'inapp',
       speed: 1,
       sidebarCollapsed: false,
+      userName: '',
       hasOnboarded: false,
       set: (patch) => set(patch),
     }),

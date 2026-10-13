@@ -151,19 +151,29 @@ async function rssAlbums(feed: 'most-played' | 'new-releases', limit: number, ge
 
 async function searchSongs(query: string, limit = 28, signal?: AbortSignal): Promise<Track[]> {
   const q = encodeURIComponent(query.trim());
-  const json = await jget(`${API}/search?term=${q}&media=music&entity=song&limit=${limit}&country=US`, 9000, signal);
-  return rawSongs(json).map(mapTrack);
+  try {
+    const json = await jget(`${API}/search?term=${q}&media=music&entity=song&limit=${limit}`, 9000, signal);
+    const songs = rawSongs(json).map(mapTrack);
+    if (songs.length > 0) return songs;
+  } catch {}
+  const fallback = await jget(`${API}/search?term=${q}&media=music&entity=song&limit=${limit}&country=US`, 9000, signal);
+  return rawSongs(fallback).map(mapTrack);
 }
 
 async function searchAlbums(query: string, limit = 12, signal?: AbortSignal): Promise<Album[]> {
   const q = encodeURIComponent(query.trim());
-  const json = await jget(`${API}/search?term=${q}&media=music&entity=album&limit=${limit}&country=US`, 9000, signal);
-  return (json?.results ?? []).filter((r: any) => r.wrapperType === 'collection').map(mapAlbum);
+  try {
+    const json = await jget(`${API}/search?term=${q}&media=music&entity=album&limit=${limit}`, 9000, signal);
+    const albums = (json?.results ?? []).filter((r: any) => r.wrapperType === 'collection').map(mapAlbum);
+    if (albums.length > 0) return albums;
+  } catch {}
+  const fallback = await jget(`${API}/search?term=${q}&media=music&entity=album&limit=${limit}&country=US`, 9000, signal);
+  return (fallback?.results ?? []).filter((r: any) => r.wrapperType === 'collection').map(mapAlbum);
 }
 
 async function searchArtists(query: string, limit = 10, signal?: AbortSignal): Promise<Artist[]> {
   const q = encodeURIComponent(query.trim());
-  const json = await jget(`${API}/search?term=${q}&media=music&entity=musicArtist&limit=${limit}&country=US`, 9000, signal);
+  const json = await jget(`${API}/search?term=${q}&media=music&entity=musicArtist&limit=${limit}`, 9000, signal);
   const artists: Artist[] = (json?.results ?? [])
     .filter((r: any) => r.wrapperType === 'artist')
     .map((r: any) => ({

@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Heart, ListMusic, Palette, Radio } from 'lucide-react';
+import { ArrowRight, Check, Heart, ListMusic, Palette, Radio, User } from 'lucide-react';
 import { useSettings } from '../store/settings';
 import { THEMES } from '../themes/themes';
 import { cx } from '../utils';
 import { Logo } from './Logo';
 
-/* Onboarding: welcome → choose theme → ready. Runs once, persisted. */
+/* Onboarding: welcome & name → choose theme → ready. Runs once, persisted. */
 
 const ACCENTS = ['#7c6cff', '#3fd4ff', '#22e37b', '#ff7a59', '#ff5fb0', '#f5c542', '#b26bff', '#e8e3d9'];
 
 export function FirstRun() {
   const hasOnboarded = useSettings((s) => s.hasOnboarded);
+  const userName = useSettings((s) => s.userName);
   const [step, setStep] = useState(0);
-  if (hasOnboarded) return null;
+  if (hasOnboarded && userName?.trim()) return null;
   return <Inner step={step} setStep={setStep} />;
 }
 
@@ -56,8 +57,10 @@ function Inner({ step, setStep }: { step: number; setStep: (n: number) => void }
   const set = useSettings((s) => s.set);
   const themeId = useSettings((s) => s.themeId);
   const customAccent = useSettings((s) => s.customAccent);
+  const storedName = useSettings((s) => s.userName);
+  const [nameInput, setNameInput] = useState(storedName || '');
 
-  const finish = () => set({ hasOnboarded: true });
+  const finish = () => set({ hasOnboarded: true, userName: nameInput.trim() });
 
   return (
     <motion.div className="fixed inset-0 z-[96] app-bg grain flex items-center justify-center p-6"
@@ -74,7 +77,34 @@ function Inner({ step, setStep }: { step: number; setStep: (n: number) => void }
               <p className="text-soft text-[15px] mt-3 max-w-[440px] mx-auto leading-relaxed">
                 Your modern internet music player — live charts, instant search, local playlists and a player that adapts to every album.
               </p>
-              <div className="flex items-center justify-center gap-2.5 mt-8 flex-wrap">
+
+              {/* Name prompt */}
+              <div className="mt-7 max-w-[360px] mx-auto">
+                <label htmlFor="user-name-input" className="block text-[12.5px] font-semibold text-soft mb-2 text-center">
+                  What should we call you?
+                </label>
+                <div className="relative">
+                  <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
+                  <input
+                    id="user-name-input"
+                    type="text"
+                    placeholder="Enter your name…"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        set({ userName: nameInput.trim() });
+                        setStep(1);
+                      }
+                    }}
+                    maxLength={32}
+                    autoFocus
+                    className="input !h-11 !pl-10 !pr-4 !rounded-xl !bg-[color-mix(in_srgb,var(--text)_6%,transparent)] border-[color-mix(in_srgb,var(--text)_12%,transparent)] focus:!border-[var(--accent)] text-[14.5px] font-medium text-center shadow-inner"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2.5 mt-7 flex-wrap">
                 {[
                   { icon: Radio, label: 'Live charts' },
                   { icon: Heart, label: 'Local favorites' },
@@ -84,7 +114,13 @@ function Inner({ step, setStep }: { step: number; setStep: (n: number) => void }
                   <span key={label} className="chip !h-9 !px-4"><Icon size={13.5} />{label}</span>
                 ))}
               </div>
-              <button className="btn btn-accent !h-12 !px-8 !text-[14px] mt-10" onClick={() => setStep(1)}>
+              <button
+                className="btn btn-accent !h-12 !px-8 !text-[14px] mt-8"
+                onClick={() => {
+                  set({ userName: nameInput.trim() });
+                  setStep(1);
+                }}
+              >
                 Continue <ArrowRight size={16} />
               </button>
               <p className="text-dim text-[11.5px] mt-5">No account required · your data never leaves this device</p>
@@ -122,7 +158,9 @@ function Inner({ step, setStep }: { step: number; setStep: (n: number) => void }
             <motion.div key="s2" initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
               transition={{ type: 'spring', stiffness: 240, damping: 24 }} className="text-center">
               <div className="flex justify-center"><Logo size={64} glow /></div>
-              <h2 className="display text-main font-bold text-[30px] mt-7">You're all set</h2>
+              <h2 className="display text-main font-bold text-[30px] mt-7">
+                {nameInput.trim() ? `You're all set, ${nameInput.trim()}!` : "You're all set"}
+              </h2>
               <p className="text-soft text-[14px] mt-2.5 max-w-[400px] mx-auto leading-relaxed">
                 Search for music and start listening. Everything you love stays in your library — right here on this device.
               </p>

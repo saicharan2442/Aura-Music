@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Bell, Check, Globe, HardDrive, Keyboard, Monitor, Moon, Music2, Palette, Shield, Sun, Trash2,
+  Bell, Check, Globe, HardDrive, Keyboard, Monitor, Moon, Music2, Palette, Shield, Sun, Trash2, User,
 } from 'lucide-react';
 import { useLibrary } from '../store/library';
 import { useSettings, type AudioQuality, type ProviderPref } from '../store/settings';
@@ -86,6 +86,7 @@ export default function Settings() {
         {/* section nav */}
         <nav className="hidden lg:block sticky top-8 w-[190px] shrink-0 space-y-1 text-[13px]">
           {[
+            ['profile', User, 'Profile'],
             ['appearance', Palette, 'Appearance'],
             ['network', Globe, 'Network & sources'],
             ['audio', Music2, 'Playback & audio'],
@@ -100,6 +101,20 @@ export default function Settings() {
         </nav>
 
         <div className="flex-1 min-w-0 space-y-12">
+          {/* ================= profile ================= */}
+          <Section id="profile" icon={User} title="Profile" sub="Your Aura identity and personalized greeting">
+            <SettingRow title="Your name" sub="Displayed before the greeting message on the Home page" first>
+              <input
+                type="text"
+                placeholder="Enter your name…"
+                value={s.userName}
+                onChange={(e) => s.set({ userName: e.target.value })}
+                className="input !h-9 !w-[220px] !text-[13px] !rounded-lg"
+                maxLength={32}
+              />
+            </SettingRow>
+          </Section>
+
           {/* ================= appearance ================= */}
           <Section id="appearance" icon={Palette} title="Appearance" sub="Theme, accent and material">
             <SettingRow title="Color mode" sub="System follows your Windows appearance setting" first>
